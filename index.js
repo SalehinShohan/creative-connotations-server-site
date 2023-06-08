@@ -32,6 +32,20 @@ async function run() {
     const instructorsCollection = client.db("CreativeConnotationsDB").collection("instructors");
     const reviewCollection = client.db("CreativeConnotationsDB").collection("reviews");
     const cartCollection = client.db("CreativeConnotationsDB").collection("carts");
+    const userCollection = client.db("CreativeConnotationsDB").collection("users");
+
+    app.post('/users', async(req, res) => {
+      const user = req.body;
+      const query = {email: user.email}
+      const existingUser = await userCollection.findOne(query);
+      if(existingUser){
+        return res.send({message: 'user already existing'})
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+
+    })
+
 
     app.get('/class', async(req, res) => {
         const result = await classCollection.find().toArray();
