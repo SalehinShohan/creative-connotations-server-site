@@ -30,6 +30,8 @@ async function run() {
 
     const classCollection = client.db("CreativeConnotationsDB").collection("classes");
     const instructorsCollection = client.db("CreativeConnotationsDB").collection("instructors");
+    const reviewCollection = client.db("CreativeConnotationsDB").collection("reviews");
+    const cartCollection = client.db("CreativeConnotationsDB").collection("carts");
 
     app.get('/class', async(req, res) => {
         const result = await classCollection.find().toArray();
@@ -40,7 +42,28 @@ async function run() {
         const result = await instructorsCollection.find().toArray();
         res.send(result);
     })
+    app.get('/review', async(req, res) => {
+        const result = await reviewCollection.find().toArray();
+        res.send(result);
+    })
 
+    //carts collections
+    app.get('/carts', async(req, res) => {
+      const email = req.query.email;
+      console.log(email)
+      if(!email){
+        res.send([]);
+      }
+      const query = {email: email};
+      const result = await cartCollection.find(query).toArray()
+      res.send(result);
+    })
+
+    app.post('/carts', async(req, res) => {
+      const item = req.body;
+      const result = await cartCollection.insertOne(item);
+      res.send(result);
+    })
 
 
 
