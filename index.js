@@ -48,21 +48,11 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const classCollection = client
-      .db("CreativeConnotationsDB")
-      .collection("classes");
-    const instructorsCollection = client
-      .db("CreativeConnotationsDB")
-      .collection("instructors");
-    const reviewCollection = client
-      .db("CreativeConnotationsDB")
-      .collection("reviews");
-    const cartCollection = client
-      .db("CreativeConnotationsDB")
-      .collection("carts");
-    const userCollection = client
-      .db("CreativeConnotationsDB")
-      .collection("users");
+    const classCollection = client.db("CreativeConnotationsDB").collection("classes");
+    const instructorsCollection = client.db("CreativeConnotationsDB").collection("instructors");
+    const reviewCollection = client.db("CreativeConnotationsDB").collection("reviews");
+    const cartCollection = client.db("CreativeConnotationsDB").collection("carts");
+    const userCollection = client.db("CreativeConnotationsDB").collection("users");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -145,6 +135,12 @@ async function run() {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
+
+    app.post('/class', async(req, res) => {
+      const newClass = req.body;
+      const result = await classCollection.insertOne(newClass);
+      res.send(result);
+    })
 
     app.get("/instructor", async (req, res) => {
       const result = await instructorsCollection.find().toArray();
