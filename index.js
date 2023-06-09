@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
@@ -33,6 +34,14 @@ async function run() {
     const reviewCollection = client.db("CreativeConnotationsDB").collection("reviews");
     const cartCollection = client.db("CreativeConnotationsDB").collection("carts");
     const userCollection = client.db("CreativeConnotationsDB").collection("users");
+
+    app.post('/jwt', (req, res) => {
+
+      const user = req.body;
+      const token = jwt.sign(user, env.process.ACCESS_TOKEN_JWT, {expiresIN: '1h'})
+
+      res.send({token})
+    })
 
     app.get('/users', async(req, res) => {
       const result = await userCollection.find().toArray();
@@ -117,9 +126,6 @@ async function run() {
       const result = await cartCollection.deleteOne(query);
       res.send(result);
     })
-
-
-
 
 
 
