@@ -144,6 +144,13 @@ async function run() {
       res.send(result);
     })
 
+    app.delete("/class/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.get("/instructor", async (req, res) => {
       const result = await instructorsCollection.find().toArray();
       res.send(result);
@@ -184,6 +191,8 @@ async function run() {
       const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
+
+    
 
     app.patch('/approveClass/:id', async(req,res) => {
       const id = req.params.id;
