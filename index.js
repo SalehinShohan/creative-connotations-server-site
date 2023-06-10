@@ -185,6 +185,26 @@ async function run() {
       res.send(result);
     });
 
+    app.patch('/approveClass/:id', async(req,res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const updateStatus = {
+        $set: {status: 'approved'}
+      }
+      const result = await classCollection.updateOne(filter, updateStatus)
+      res.send(result);
+    })
+
+    app.patch('/denyClass/:id', async(req,res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const updateStatus = {
+        $set: {status: 'deny'}
+      }
+      const result = await classCollection.updateOne(filter, updateStatus)
+      res.send(result);
+    })
+
 
     //payment api
 
