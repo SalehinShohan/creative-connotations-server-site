@@ -65,12 +65,36 @@ async function run() {
       res.send({ token });
     });
 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
+      }
+      next();
+    };
+
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "instructor") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
+      }
+      next();
+    };
+
     app.get("/users", async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
 
-    app.post("/users", async (req, res) => {
+    app.post("/users",verifyJWT, async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
@@ -81,7 +105,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users/admin/:email', verifyJWT ,async(req, res) => {
+    app.get('/users/admin/:email', verifyJWT, verifyAdmin ,async(req, res) => {
       const email = req.params.email;
 
       if(req.decoded.email !== email){
@@ -94,7 +118,7 @@ async function run() {
       res.send(result);
     })
 
-    app.patch("/users/admin/:id", async (req, res) => {
+    app.patch("/users/admin/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
 
@@ -107,7 +131,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get('/users/instructor/:email', verifyJWT ,async(req, res) => {
+    app.get('/users/instructor/:email', verifyJWT, verifyInstructor ,async(req, res) => {
       const email = req.params.email;
 
       if(req.decoded.email !== email){
@@ -120,7 +144,7 @@ async function run() {
       res.send(result);
     })
 
-    app.patch("/users/instructor/:id", async (req, res) => {
+    app.patch("/users/instructor/:id",verifyInstructor, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
 
@@ -144,12 +168,31 @@ async function run() {
       res.send(result);
     })
 
-    app.delete("/class/:id", async (req, res) => {
+    
+    app.delete("/deleteClass/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await classCollection.deleteOne(query);
       res.send(result);
     });
+
+
+    app.put('/updateClass/:id', async(req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+      const filter = {_id: new ObjectId(id)};
+
+      const updatedDoc = {
+        $set: {
+          price: body.price,
+          spotsAvailable: body.spotsAvailable,
+          studentsEnrolled: body.studentsEnrolled,
+        },
+      };
+
+      const result = await classCollection.updateOne(filter, updatedDoc);
+      res.send(result)
+    })
 
     app.get("/instructor", async (req, res) => {
       const result = await instructorsCollection.find().toArray();
@@ -162,14 +205,14 @@ async function run() {
     });
 
     //carts collections
-    app.get("/carts", verifyJWT, async (req, res) => {
+    app.get("/carts", async (req, res) => {
       const email = req.query.email;
       console.log(email);
       if (!email) {
         res.send([]);
       }
 
-      const decodedEmail = req.decoded.email;
+      const decodedEmail = req?.decoded?.email;
       if(email !== decodedEmail){
         return res.status(403).send({ error: true, message: "forbidden access" })
       }
@@ -194,7 +237,7 @@ async function run() {
 
     
 
-    app.patch('/approveClass/:id', async(req,res) => {
+    app.patch('/approveClass/:id',verifyJWT, verifyAdmin, async(req,res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)}
       const updateStatus = {
@@ -204,7 +247,7 @@ async function run() {
       res.send(result);
     })
 
-    app.patch('/denyClass/:id', async(req,res) => {
+    app.patch('/denyClass/:id',verifyJWT,verifyAdmin, async(req,res) => {
       const id = req.params.id;
       const filter = {_id: new ObjectId(id)}
       const updateStatus = {
@@ -233,6 +276,46 @@ async function run() {
 
     app.post('/payments', async(req, res) => {
       const payment = req.body;
+
+      const instEmail = payment?.instEmail;
+      const instQuery = { email: instEmail}
+      const instData = await userCollection.findOne(instQuery)
+      if(instData?.role === 'instructor') {
+        const totalStudent = parseFloat(instData.studentsEnrolled) + 1;
+        const updateInst = {
+          $set: {studentsEnrolled: totalStudent}
+        }
+        const updateInstData = await userCollection.updateOne(instQuery, updateInst)
+      }
+
+      const addId = payment?.classId;
+      const query = {_id: new ObjectId(addId)}
+      const dltAddData = await cartCollection.deleteOne(query)
+      const prvClassId = payment?.prvclassId
+      const prvClassQuery = {_id: new ObjectId(prvClassId)}
+      const prvClass = await classCollection.findOne(prvClassQuery)
+      const prvSeat = prvClass?.spotsAvailable;
+      const prvStudent = prvClass?.studentsEnrolled;
+
+      if(parseFloat(prvSeat) > 0 || parseFloat(prvStudent) >= 0){
+        const newSeat = parseFloat(prvSeat) - 1;
+        const newStudent = parseFloat(prvStudent) + 1;
+
+        const updateDoc = {
+          $set: {
+            spotsAvailable: newSeat,
+            studentsEnrolled: newStudent
+          }
+        }
+        const updateClassSeats = await classCollection.updateOne(prvClassQuery, updateDoc)
+      }
+
+
+
+
+
+
+
       const result = await paymentCollection.insertOne(payment);
       res.send(result);
     })
