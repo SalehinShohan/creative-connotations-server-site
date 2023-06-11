@@ -129,16 +129,17 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/admin/:id", verifyJWT, verifyAdmin, async (req, res) => {
+    app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
 
-      const updateDoc = {
+      const updatedDoc = {
         $set: {
           role: "admin",
         },
       };
-      const result = await userCollection.updateOne(filter, updateDoc);
+
+      const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
 
@@ -160,16 +161,17 @@ async function run() {
       }
     );
 
-    app.patch("/users/instructor/:id", verifyInstructor, async (req, res) => {
+    app.patch("/users/instructor/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
 
-      const updateDoc = {
+      const updatedDoc = {
         $set: {
           role: "instructor",
         },
       };
-      const result = await userCollection.updateOne(filter, updateDoc);
+
+      const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
 
