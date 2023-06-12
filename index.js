@@ -186,6 +186,14 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/instructorImage', async(req, res) => {
+      const inSemail = req.query?.email;
+      const query = {email: inSemail}
+      const user = await userCollection.findOne(query)
+     
+      res.send(user);
+    })
+
     app.delete("/deleteClass/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -271,6 +279,21 @@ async function run() {
       const result = await classCollection.updateOne(filter, updateStatus);
       res.send(result);
     });
+
+    app.put('/feedback/:id', async(req,res) => {
+      const id = req.params.id;
+      const updateFeedback = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const options = {upsert: true};
+
+      const updateDoc = {
+        $set: {
+          feedback: updateFeedback.feedback,
+        }
+      }
+      const result = await classCollection.updateOne(filter, updateDoc, options);
+
+    })
 
     //payment api
 
